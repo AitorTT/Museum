@@ -1,0 +1,118 @@
+[gd_scene load_steps=9 format=3 uid="uid://ciaja264dreny"]
+
+[ext_resource type="Script" uid="uid://djljytx2re1da" path="res://SCENES/PLAYER/joysticks.gd" id="1_oemok"]
+[ext_resource type="Script" uid="uid://hory0vgrje3c" path="res://SCENES/PLAYER/joystick_movement.gd" id="2_eay63"]
+[ext_resource type="Shader" uid="uid://dbkakgm73jfws" path="res://SCENES/PLAYER/joysticks.gdshader" id="3_od6ft"]
+[ext_resource type="Script" uid="uid://buff8udidrwfk" path="res://SCENES/PLAYER/joystick_rotation.gd" id="4_ucoyx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o6g3h"]
+bg_color = Color(0.6, 0.6, 0.6, 0.588235)
+corner_radius_top_left = 150
+corner_radius_top_right = 150
+corner_radius_bottom_right = 150
+corner_radius_bottom_left = 150
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hjhuc"]
+shader = ExtResource("3_od6ft")
+shader_parameter/circle_color = Color(1, 1, 1, 0.43137255)
+shader_parameter/radius = 1.1
+shader_parameter/edge_softness = 0.005
+
+[sub_resource type="Gradient" id="Gradient_cm0pq"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_fos0i"]
+gradient = SubResource("Gradient_cm0pq")
+fill_from = Vector2(0.880734, 0.12844)
+
+[node name="Joysticks_margins" type="CanvasLayer"]
+script = ExtResource("1_oemok")
+
+[node name="Control" type="Control" parent="."]
+visibility_layer = 2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 200
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 200
+theme_override_constants/margin_bottom = 100
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/MarginContainer"]
+layout_mode = 2
+
+[node name="Left" type="Control" parent="Control/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 4
+
+[node name="Joystick_movement" type="Panel" parent="Control/MarginContainer/HBoxContainer/Left"]
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 300.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_o6g3h")
+script = ExtResource("2_eay63")
+
+[node name="TextureRect" type="TextureRect" parent="Control/MarginContainer/HBoxContainer/Left/Joystick_movement"]
+material = SubResource("ShaderMaterial_hjhuc")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(2, 2)
+pivot_offset = Vector2(32, 32)
+texture = SubResource("GradientTexture2D_fos0i")
+
+[node name="Right" type="Control" parent="Control/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 4
+
+[node name="Joystick_rotation" type="Panel" parent="Control/MarginContainer/HBoxContainer/Right"]
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 300.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_o6g3h")
+script = ExtResource("4_ucoyx")
+
+[node name="TextureRect" type="TextureRect" parent="Control/MarginContainer/HBoxContainer/Right/Joystick_rotation"]
+material = SubResource("ShaderMaterial_hjhuc")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(2, 2)
+pivot_offset = Vector2(32, 32)
+texture = SubResource("GradientTexture2D_fos0i")

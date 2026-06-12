@@ -1,0 +1,19 @@
+# Godot auto-generated cache
+.godot/
+
+# Build exports
+EXPORT/
+EXPORT.zip
+
+# Backups
+*.bak
+*.compressed.*
+*.compressed.jpg
+
+# Downloads / caches
+rack_downloads/
+.rack_downloads/
+
+# OS
+Thumbs.db
+.DS_Store

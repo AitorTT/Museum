@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://i37rf1s88d03"]
+
+[ext_resource type="Script" uid="uid://14iww5k16676" path="res://SCENES/objects/video_player.gd" id="1_wddep"]
+[ext_resource type="VideoStream" uid="uid://cg8kru6ony7ux" path="res://SCENES/LEVEL_1/VIDEO/Sofas.ogv" id="2_8l44f"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_rj6lq"]
+
+[node name="VideoPlayer" type="Node3D"]
+transform = Transform3D(-1.31134e-07, 3, -1.31134e-07, 0, -1.31134e-07, -3, -3, -1.31134e-07, 5.73206e-15, 0, 0, 0)
+script = ExtResource("1_wddep")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, -1.50996e-07, 4.90245e-15, 1.50996e-07, -1, 1.12155e-07, -9.3791e-15, 8.74228e-08, 1.2829, 0, 0, -0.24745)
+mesh = SubResource("PlaneMesh_rj6lq")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+size = Vector2i(487, 850)
+
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="SubViewport"]
+offset_right = 478.0
+offset_bottom = 850.0
+stream = ExtResource("2_8l44f")
+autoplay = true
+loop = true

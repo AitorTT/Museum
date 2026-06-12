@@ -1,0 +1,45 @@
+RoomGenerator MODULES
+=====================
+Root: RoomGenerator.gd (~309 lines, orchestrator)
+  _ready() creates 5 child modules; _process/_input delegate to them.
+
+SUB-MODULES (all in this folder, instantiated via load() + .new()):
+
+  RoomBuilder.gd
+    Room generation: walls, floor, ceiling, paintings, lights,
+    settings button, collision. Reads @exports from generator.
+    Methods: generate(), clear(), get_room(), _make_lightmapped()
+
+  RoomInteraction.gd
+    First-person interaction: hover raycasting, click/touch
+    handling, debug overlay, crosshair, room culling, button
+    flash/highlight, settings highlight.
+    Methods: process_loop(), handle_touch(pos), reset(),
+    setup_crosshair(), setup_debug(), set_debug_visible(v)
+
+  PaintingViewer.gd
+    Fullscreen painting viewer with steal/edit UI, theft logging,
+    painting scanning, 3D highlighting, stolen label.
+    Methods: show_viewer(tex, area), hide_viewer(),
+    handle_input(event), check_web_submit(), scan_paintings(),
+    highlight_painting(area, hovered, idx),
+    get_painting_tex(area, idx), setup_viewer()
+
+  PaintingTransformPanel.gd
+    Numpad-style transform editor for painting position/rotation/scale.
+    Methods: show_panel(mount), hide_panel(), update_cursor()
+
+  RoomSettingsPanel.gd
+    Settings panel UI (multi-page toggles for dimensions, materials,
+    doors, windows, paintings, lights, save/load, editing mode).
+    Methods: toggle(), update_cursor()
+
+Other files in SCENES/generators/:
+  ElevatorGenerator/  — floor/elevator navigation buttons
+  RackGenerator/      — server rack generation
+  Thieflist/          — theft log display
+
+SHARED:
+  SCENES/RoomLayout.gd    — Resource class for save/load
+  SCENES/objects/         — Painting, typewriter, video_player scenes
+  SCENES/PLAYER/          — Player scene + joystick scripts

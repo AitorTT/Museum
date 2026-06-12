@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://byylj7o7bgnk2"]
+
+[ext_resource type="Script" uid="uid://dsqw7a5jm85u2" path="res://SCENES/PLAYER/character_body_3d.gd" id="1_3ynu0"]
+[ext_resource type="Script" uid="uid://cv84mcmkiwr12" path="res://SCENES/PLAYER/PaintingClickRaycaster.gd" id="2_rt3xp"]
+[ext_resource type="PackedScene" uid="uid://ciaja264dreny" path="res://SCENES/PLAYER/joysticks_margins.tscn" id="3_3ynu0"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_glv2v"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3ynu0"]
+
+[node name="PLAYER" type="CharacterBody3D" unique_id=1126336741]
+script = ExtResource("1_3ynu0")
+
+[node name="CameraArm" type="SpringArm3D" parent="." unique_id=367027392]
+transform = Transform3D(1, 0, 0, 0, 0.959653, 0.281186, 0, -0.281186, 0.959653, 0, 1.60862, -1.09669)
+
+[node name="Camera3D" type="Camera3D" parent="CameraArm" unique_id=1958794675]
+fov = 50.0
+script = ExtResource("2_rt3xp")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1229460434]
+transform = Transform3D(0.570102, 0, 0, 0, 0.600868, 0, 0, 0, 0.548863, 0, 0.816461, 0)
+visible = false
+mesh = SubResource("CapsuleMesh_glv2v")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1940583099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.932861, 0)
+shape = SubResource("CapsuleShape3D_3ynu0")
+
+[node name="Joysticks_margins" parent="." unique_id=1222924864 instance=ExtResource("3_3ynu0")]

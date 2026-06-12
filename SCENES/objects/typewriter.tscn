@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://bik1t6rhy03ox"]
+
+[ext_resource type="Script" uid="uid://bkb1jiyp4fxy7" path="res://SCENES/objects/typewriter.gd" id="1_u0sld"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_wwkp7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wwkp7"]
+albedo_color = Color(1, 0, 0, 1)
+
+[node name="Typewriter" type="Node3D"]
+transform = Transform3D(-1, 0, -3.7678e-07, 0, 1.90185, 0, 8.74228e-08, 0, -4.30986, 0, 0, 0)
+script = ExtResource("1_u0sld")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.15669e-08, -2.34026, 0, -4.15669e-08, 4.47151e-15, -1.93825, 0.95094, -1.02296e-07, -8.47237e-08, -0.112221, 0, 0)
+mesh = SubResource("PlaneMesh_wwkp7")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(-5.61263e-08, -1, 1.09864e-07, 0, -4.37114e-08, -2.51341, 1.28402, -4.37114e-08, 4.80233e-15, -0.0134964, 0, 0)
+mesh = SubResource("PlaneMesh_wwkp7")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_wwkp7")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+
+[node name="Control" type="Control" parent="SubViewport"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Label" type="Label" parent="SubViewport/Control"]
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 78
+autowrap_mode = 2

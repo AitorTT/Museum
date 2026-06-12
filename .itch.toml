@@ -1,0 +1,7 @@
+# itch.io butler deployment config
+# Usage: butler push EXPORT/ user/museum:web
+
+[web]
+title = "Museum Game"
+description = "A virtual museum walkthrough with paintings, sculptures, and a thief registry."
+version = "1.0.0"
