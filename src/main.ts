@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import {
   AMBIENT_INTENSITY,
-  HEMI_INTENSITY,
-  HEMI_GROUND_LINEAR,
   SKY_COLOR,
   PAINTINGS_DIR,
   FLOOR_TEXTURE,
@@ -83,14 +81,6 @@ function setupScene(
 
   const ambient = new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY);
   scene.add(ambient);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x000000, HEMI_INTENSITY);
-  hemi.groundColor.setRGB(
-    HEMI_GROUND_LINEAR.r,
-    HEMI_GROUND_LINEAR.g,
-    HEMI_GROUND_LINEAR.b,
-    THREE.LinearSRGBColorSpace,
-  );
-  scene.add(hemi);
 
   const museum = new Museum(paintingTextures, PAINTING_FILES, paintingUrls, floorTex);
   scene.add(museum.group);
@@ -116,11 +106,15 @@ function setupScene(
   const viewer = new PaintingViewer();
   new Interaction(player.camera, museum.paintings, museum.raycastStatics, viewer, renderer.domElement, isMobile);
 
-  window.addEventListener('resize', () => {
+  // Correct the camera aspect immediately (it defaults to 1 and would stretch
+  // the image until the first real resize event).
+  const resize = () => {
     player.camera.aspect = window.innerWidth / window.innerHeight;
     player.camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+  };
+  resize();
+  window.addEventListener('resize', resize);
 
   if (!isMobile) {
     renderer.domElement.addEventListener('mousemove', (e) => {

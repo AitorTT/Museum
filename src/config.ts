@@ -27,12 +27,27 @@ export const HOVER_GLOW_STRENGTH = 1.5;
 // Materials (DullWhite1.tres: albedo 0.298, 0, 0.506 in linear space)
 export const WALL_COLOR_LINEAR = { r: 0.29803923, g: 0.0, b: 0.5058824 };
 export const FLOOR_UV_SCALE = 2.0; // uv1_scale of the floor material (triplanar)
+export const FLOOR_TEXTURE_BOOST = 2.2; // the brick texture is very dark; lift it
 export const DEFAULT_SEGMENT_COLOR_LINEAR = { r: 0.8, g: 0.8, b: 0.8 };
 
-// Lights (Godot used baked LightmapGI + ceiling spots; we approximate with cheap ambient)
-export const AMBIENT_INTENSITY = 0.9;
-export const HEMI_INTENSITY = 1.1;
-export const HEMI_GROUND_LINEAR = { r: 0.35, g: 0.35, b: 0.4 };
+// Lighting: baked per-vertex light approximating Godot's LightmapGI + ceiling
+// spots (energy 8, range 15, 60deg cone) — zero runtime lights for mobile perf.
+export const AMBIENT_INTENSITY = 1.0;
+export const BAKE_ENERGY = 48.0; // spot intensity for the E/d^2 falloff model
+export const BAKE_MIN_DISTANCE = 1.5;
+export const BAKE_DIRECT_SCALE = 1.0;
+export const BAKE_CONE_INNER = 0.75; // cos(angle): full brightness inside
+export const BAKE_CONE_OUTER = 0.35; // cos(angle): fades to zero outside
+export const BAKE_BOUNCE_WALL = 0.55;
+export const BAKE_BOUNCE_FLOOR = 0.55;
+export const BAKE_CEIL_BASE = 0.3;
+export const BAKE_CEIL_GLOW = 0.9;
+export const BAKE_CEIL_SIGMA2 = 26.0; // gaussian falloff under the fixture
+export const BAKE_MIN = 0.08;
+export const BAKE_MAX = 1.8;
+export const FLOOR_SEGMENTS = 5; // subdivisions so the light pool has a center
+export const WALL_SEGMENTS_H = 5; // along the wall length
+export const WALL_SEGMENTS_V = 4; // vertical gradient
 
 // Player (character_body_3d.gd exports + player.tscn)
 export const PLAYER_SPEED = 7.0;

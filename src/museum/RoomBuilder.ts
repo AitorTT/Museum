@@ -20,7 +20,7 @@ import {
   type RoomDef,
 } from './layout.js';
 
-export type SegmentKind = 'wall' | 'floor';
+export type SegmentKind = 'wall' | 'floor' | 'ceiling';
 
 export interface SegmentBox {
   cx: number;
@@ -30,6 +30,10 @@ export interface SegmentBox {
   sy: number;
   sz: number;
   kind: SegmentKind;
+  /** Ceiling light anchor for vertex baking (room center, just under ceiling). */
+  lx: number;
+  ly: number;
+  lz: number;
 }
 
 export interface PaintingSpot {
@@ -53,6 +57,10 @@ const FACE_INSET = WALL_T + 0.02;
 
 export function planRoom(room: RoomDef, floorY: number): RoomPlan {
   const boxes: SegmentBox[] = [];
+  // RoomBuilder._add_light position: (0, hh - t - 0.05, 0) local
+  const anchorX = room.x;
+  const anchorY = floorY + HH - WALL_T - 0.05;
+  const anchorZ = room.z;
   const seg = (
     lx: number,
     ly: number,
@@ -70,6 +78,9 @@ export function planRoom(room: RoomDef, floorY: number): RoomPlan {
       sy,
       sz,
       kind,
+      lx: anchorX,
+      ly: anchorY,
+      lz: anchorZ,
     });
   };
 
@@ -95,7 +106,7 @@ export function planRoom(room: RoomDef, floorY: number): RoomPlan {
 
   // Floor + ceiling
   seg(0, -HH + WALL_T * 0.5, 0, ROOM_WIDTH, WALL_T, ROOM_DEPTH, 'floor');
-  seg(0, HH - WALL_T * 0.5, 0, ROOM_WIDTH, WALL_T, ROOM_DEPTH, 'wall');
+  seg(0, HH - WALL_T * 0.5, 0, ROOM_WIDTH, WALL_T, ROOM_DEPTH, 'ceiling');
 
   // Painting spot (RoomBuilder._add_room_features; offsets h/v are 0 in the museum build)
   const py = -HH + PAINTING_HEIGHT;
