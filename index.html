@@ -144,6 +144,49 @@
         pointer-events: none;
       }
 
+      /* Teleport warp FX */
+      #warp-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 15;
+        pointer-events: none;
+        opacity: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(150, 60, 255, 0) 0%,
+          rgba(120, 30, 220, 0.35) 45%,
+          rgba(60, 0, 120, 0.8) 100%
+        );
+      }
+      #warp-overlay.active {
+        animation: warpflash 0.8s ease-in-out;
+      }
+      @keyframes warpflash {
+        0% {
+          opacity: 0;
+        }
+        35% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      canvas.warping {
+        animation: warpcanvas 0.8s ease-in-out;
+      }
+      @keyframes warpcanvas {
+        0% {
+          filter: none;
+        }
+        35% {
+          filter: blur(5px) saturate(2.2) hue-rotate(25deg);
+        }
+        100% {
+          filter: none;
+        }
+      }
+
       /* Fullscreen painting viewer */
       #painting-viewer {
         position: fixed;

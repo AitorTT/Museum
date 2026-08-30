@@ -176,6 +176,12 @@ if (Math.abs(tp.x - -6.1) > 0.2 || Math.abs(tp.z - -6.5) > 0.2) {
 if (Math.abs(tp.y - 4.27) > 0.15) {
   throw new Error(`teleporter landed at wrong height: ${tp.y}`);
 }
+// warp FX overlay must have been triggered by the teleport
+const warpArmed = await page.evaluate(() =>
+  document.getElementById('warp-overlay').classList.contains('active'),
+);
+console.log('warp overlay triggered:', warpArmed);
+if (!warpArmed) throw new Error('teleport warp FX did not trigger');
 
 // Collision solidity: in-building drop must land on the floor below (no
 // tunneling, no respawn), and a void fall must respawn at the spawn point.

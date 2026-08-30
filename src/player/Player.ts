@@ -51,6 +51,8 @@ export class Player {
   private yaw = SPAWN_YAW;
   private pitch = INITIAL_PITCH;
   private fallTimer = 0;
+  /** Warp FX timer (camera FOV punch + roll) triggered by teleports; -1 idle. */
+  private warpT = -1;
 
   constructor(private world: CollisionWorld) {
     this.camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.05, 4000);
@@ -58,6 +60,11 @@ export class Player {
     this.camera.position.set(0, CAMERA_EYE_OFFSET_Y, CAMERA_LOCAL_Z);
     this.yawObject.add(this.camera);
     this.respawn();
+  }
+
+  /** Quick screen deformation on teleport: FOV punch + slight roll. */
+  startWarp(): void {
+    this.warpT = 0;
   }
 
   onMouseMove(dx: number, dy: number): void {
@@ -118,6 +125,22 @@ export class Player {
 
     this.yawObject.position.copy(this.position);
     this.camera.rotation.x = this.pitch;
+
+    // Warp FX: FOV punch + subtle roll over 0.8s
+    if (this.warpT >= 0) {
+      this.warpT += dt;
+      const t = Math.min(this.warpT / 0.8, 1);
+      const s = Math.sin(Math.PI * t);
+      this.camera.fov = CAMERA_FOV + 38 * s;
+      this.camera.rotation.z = Math.sin(t * Math.PI * 3) * 0.07 * (1 - t);
+      this.camera.updateProjectionMatrix();
+      if (t >= 1) {
+        this.warpT = -1;
+        this.camera.fov = CAMERA_FOV;
+        this.camera.rotation.z = 0;
+        this.camera.updateProjectionMatrix();
+      }
+    }
   }
 
   setPose(x: number, y: number, z: number, yaw = this.yaw, pitch = this.pitch): void {

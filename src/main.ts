@@ -16,6 +16,7 @@ import { Player } from './player/Player.js';
 import { VirtualJoysticks } from './player/joysticks.js';
 import { Interaction } from './interaction/raycast.js';
 import { PaintingViewer } from './ui/PaintingViewer.js';
+import { TeleportFX } from './ui/TeleportFX.js';
 
 const isMobile =
   /Android/i.test(navigator.userAgent) ||
@@ -95,7 +96,12 @@ function setupScene(
   scene.add(elevator.group);
   museum.collision.dynamicBoxes = elevator.dynamicBoxes;
 
-  const teleporters = new Teleporters();
+  const teleportFX = new TeleportFX();
+  teleportFX.attachCanvas(renderer.domElement);
+  const teleporters = new Teleporters(() => {
+    teleportFX.trigger();
+    player.startWarp();
+  });
   scene.add(teleporters.group);
 
   player = new Player(museum.collision);

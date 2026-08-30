@@ -65,7 +65,7 @@ export class Teleporters {
   private pairs: Pair[] = [];
   private time = 0;
 
-  constructor() {
+  constructor(private onTeleport?: () => void) {
     const padGeo = new THREE.CylinderGeometry(1, 1, 0.06, 24);
     const rimGeo = new THREE.CylinderGeometry(1.12, 1.12, 0.04, 24);
     const padMat = new THREE.MeshBasicMaterial({ color: 0x2a1a4a });
@@ -178,6 +178,7 @@ export class Teleporters {
         const target = onA ? pair.b : pair.a;
         player.teleportTo(target.x, target.topY + CAPSULE_HEIGHT / 2 + 0.02, target.z);
         pair.cooldown = TELEPORT_COOLDOWN;
+        this.onTeleport?.();
       }
       pair.playerOn = onA || onB;
     }
