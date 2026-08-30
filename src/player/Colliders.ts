@@ -15,18 +15,24 @@ const EPS = 1e-4;
 
 export class CollisionWorld {
   readonly boxes: AABBBox[] = [];
+  /** Non-floor colliders (walls, ceiling, elevator car). */
+  readonly solidBoxes: AABBBox[] = [];
+  /** Walkable-floor colliders; resolved LAST on Y so floors win over walls. */
+  readonly floorBoxes: AABBBox[] = [];
   /** Moving colliders (elevator car/doors), refreshed externally each frame. */
   dynamicBoxes: AABBBox[] = [];
 
-  addBox(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number): void {
-    this.boxes.push({
+  addBox(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, kind: 'solid' | 'floor' = 'solid'): void {
+    const box: AABBBox = {
       minX: cx - sx / 2,
       minY: cy - sy / 2,
       minZ: cz - sz / 2,
       maxX: cx + sx / 2,
       maxY: cy + sy / 2,
       maxZ: cz + sz / 2,
-    });
+    };
+    this.boxes.push(box);
+    (kind === 'floor' ? this.floorBoxes : this.solidBoxes).push(box);
   }
 
   /**
@@ -59,20 +65,25 @@ export class CollisionWorld {
     amount: number,
   ): boolean {
     let hit = false;
-    for (const b of this.boxes) {
-      if (this.resolveOne(pos, half, axis, amount, b)) hit = true;
-    }
-    for (const b of this.dynamicBoxes) {
-      if (this.resolveOne(pos, half, axis, amount, b)) hit = true;
+    // On Y, walkable floors resolve LAST so a wall's downward push can never
+    // override the floor supporting the player (order-dependent death spiral).
+    const lists: AABBBox[][] =
+      axis === 1
+        ? [this.solidBoxes, this.dynamicBoxes, this.floorBoxes]
+        : [this.boxes, this.dynamicBoxes];
+    for (const list of lists) {
+      for (const b of list) {
+        if (this.resolveOne(pos, half, axis, amount, b)) hit = true;
+      }
     }
     return hit;
   }
 
   /**
    * Minimal-translation resolve: push the player out through the NEAREST face
-   * of the box, never the far one. An embedded player (spawn/teleport/ride
-   * edge cases) is ejected a few centimeters instead of teleported on top of
-   * whatever they clipped into.
+   * of the box, and only along this pass's axis when that axis is the box's
+   * minimal-penetration axis. Walking beside a full-height wall therefore
+   * never lets the Y pass shove the player down through the floor.
    */
   private resolveOne(
     pos: THREE.Vector3,
@@ -90,18 +101,26 @@ export class CollisionWorld {
     if (pminX >= b.maxX || pmaxX <= b.minX) return false;
     if (pminY >= b.maxY || pmaxY <= b.minY) return false;
     if (pminZ >= b.maxZ || pmaxZ <= b.minZ) return false;
+
+    const penX0 = pmaxX - b.minX;
+    const penX1 = b.maxX - pminX;
+    const penY0 = b.maxY - pminY;
+    const penY1 = pmaxY - b.minY;
+    const penZ0 = pmaxZ - b.minZ;
+    const penZ1 = b.maxZ - pminZ;
+    const penX = Math.min(penX0, penX1);
+    const penY = Math.min(penY0, penY1);
+    const penZ = Math.min(penZ0, penZ1);
+    if (axis === 0 && (penY < penX || penZ < penX)) return false;
+    if (axis === 1 && (penX < penY || penZ < penY)) return false;
+    if (axis === 2 && (penX < penZ || penY < penZ)) return false;
+
     if (axis === 0) {
-      const outMin = pmaxX - b.minX; // depth pushing toward -X face
-      const outMax = b.maxX - pminX; // depth pushing toward +X face
-      pos.x = outMin < outMax ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
+      pos.x = penX0 < penX1 ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
     } else if (axis === 1) {
-      const outUp = b.maxY - pminY; // depth pushing up onto the top face
-      const outDown = pmaxY - b.minY; // depth pushing down under the bottom face
-      pos.y = outUp < outDown ? b.maxY + half.y + EPS : b.minY - half.y - EPS;
+      pos.y = penY0 < penY1 ? b.maxY + half.y + EPS : b.minY - half.y - EPS;
     } else {
-      const outMin = pmaxZ - b.minZ;
-      const outMax = b.maxZ - pminZ;
-      pos.z = outMin < outMax ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
+      pos.z = penZ0 < penZ1 ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
     }
     return true;
   }

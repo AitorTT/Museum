@@ -44,6 +44,7 @@ const FLOOR_2: RoomDef[] = [
   r(-10, 10, 12), // (1,1) zp+zn
   r(-10, 0, 12),  // (2,1) zp+zn
   r(-10, -10, 12),// (3,1) zp+zn
+  r(0, -10, 11),  // (3,2) xp+xn+zn (fills the original layout's floor hole)
   r(10, -10, 9),  // (3,3) xp+zn
   r(20, -10, 3),  // (3,4) xp+xn (xp doorway added for the elevator)
   r(-10, -20, 5), // (4,1) xp+zp
@@ -83,3 +84,26 @@ export const MUSEUM: FloorDef[] = [
   { name: '3rdFloor', y: 12, rooms: FLOOR_3 },
   { name: '4thFloor', y: 18, rooms: FLOOR_4 },
 ];
+
+// Godot's grid has exterior doors that open onto the void (walking through
+// them drops the player out of the world). Seal them: any door whose neighbor
+// room does not exist on the same floor becomes a window wall instead. The
+// elevator doorways on room (20,-10) are exempt (their "neighbor" is the shaft).
+function sealVoidDoors(): void {
+  const grid = 10;
+  for (const floor of MUSEUM) {
+    const has = (x: number, z: number) =>
+      floor.rooms.some((r) => r.x === x && r.z === z);
+    for (const room of floor.rooms) {
+      if (room.bits & DOOR_BIT_XP && !has(room.x + grid, room.z)) room.bits &= ~DOOR_BIT_XP;
+      if (room.bits & DOOR_BIT_XN && !has(room.x - grid, room.z)) room.bits &= ~DOOR_BIT_XN;
+      if (room.bits & DOOR_BIT_ZP && !has(room.x, room.z + grid)) room.bits &= ~DOOR_BIT_ZP;
+      if (room.bits & DOOR_BIT_ZN && !has(room.x, room.z - grid)) room.bits &= ~DOOR_BIT_ZN;
+    }
+  }
+  for (const floorIdx of [0, 1]) {
+    const room = MUSEUM[floorIdx].rooms.find((r) => r.x === 20 && r.z === -10);
+    if (room) room.bits |= DOOR_BIT_XP;
+  }
+}
+sealVoidDoors();

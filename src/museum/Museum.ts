@@ -8,6 +8,9 @@ import {
   DEFAULT_SEGMENT_COLOR_LINEAR,
   FLOOR_UV_SCALE,
   FLOOR_TEXTURE_BOOST,
+  CAPSULE_RADIUS,
+  ROOM_HEIGHT,
+  WALL_T,
   BAKE_ENERGY,
   BAKE_MIN_DISTANCE,
   BAKE_DIRECT_SCALE,
@@ -162,7 +165,7 @@ export class Museum {
         const plan = planRoom(room, floor.y);
         for (const box of plan.boxes) {
           (box.kind === 'floor' ? floorGeoms : wallGeoms).push(segmentGeometry(box));
-          this.collision.addBox(box.cx, box.cy, box.cz, box.sx, box.sy, box.sz);
+          this.collision.addBox(box.cx, box.cy, box.cz, box.sx, box.sy, box.sz, box.kind === 'floor' ? 'floor' : 'solid');
         }
 
         // MuseumBuilder._next_painting: sequential assignment, rooms with 3+
@@ -179,6 +182,32 @@ export class Museum {
             this.group.add(painting.group);
             this.paintings.push(painting);
           }
+        }
+      }
+    }
+
+    // Corner patches: diagonal seams between rooms (where a diagonal quadrant
+    // has no room) let a 1.1m-wide player drop through the exact grid corner.
+    // A 2.2m patch at each corner point that touches a room keeps support
+    // across the seam; the patches never extend past the wall lines.
+    const patchY = -ROOM_HEIGHT / 2 + WALL_T / 2;
+    const patchSize = CAPSULE_RADIUS * 4;
+    for (const floor of MUSEUM) {
+      const corners = new Set<string>();
+      for (const room of floor.rooms) {
+        for (const sx of [-5, 5]) {
+          for (const sz of [-5, 5]) {
+            corners.add(`${room.x + sx},${room.z + sz}`);
+          }
+        }
+      }
+      for (const key of corners) {
+        const [px, pz] = key.split(',').map(Number);
+        const touches = floor.rooms.some(
+          (r) => px >= r.x - 5 && px <= r.x + 5 && pz >= r.z - 5 && pz <= r.z + 5,
+        );
+        if (touches) {
+          this.collision.addBox(px, floor.y + patchY, pz, patchSize, WALL_T, patchSize, 'floor');
         }
       }
     }

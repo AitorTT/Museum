@@ -106,6 +106,7 @@ function setupScene(
     paintings: museum.paintings.length,
     colliders: museum.collision.boxes.length,
     rooms: MUSEUM.reduce((n, f) => n + f.rooms.length, 0),
+    layout: MUSEUM,
     museum,
     player,
     elevator,

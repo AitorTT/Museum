@@ -134,10 +134,33 @@ export class Elevator {
     this.carBoxes.push({ x: hw - t / 2, y: 0, z: 0, sx: t, sy: hh * 2, sz: hd * 2 + t * 2 });
     this.addBox(hw - t / 2, 0, 0, t, hh * 2, hd * 2 + t * 2, wallMat);
 
-    // side walls (local +/-Z)
+    // side walls (local +/-Z) with windows: opening 2.6 wide, 1.8 tall,
+    // sill 1.0 above the car floor
+    const winHalf = 1.3;
+    const winSill = -hh + t + 1.0; // -1.2 local
+    const winTop = winSill + 1.8; // 0.6 local
     for (const s of [-1, 1]) {
-      this.carBoxes.push({ x: 0, y: 0, z: s * (hd - t / 2), sx: hw * 2, sy: hh * 2, sz: t });
-      this.addBox(0, 0, s * (hd - t / 2), hw * 2, hh * 2, t, wallMat);
+      const wz = s * (hd - t / 2);
+      // full-height side segments left/right of the window
+      const segW = hw - winHalf; // 0.7
+      for (const sx of [-1, 1]) {
+        this.carBoxes.push({
+          x: sx * (hw - segW / 2),
+          y: 0,
+          z: wz,
+          sx: segW,
+          sy: hh * 2,
+          sz: t,
+        });
+        this.addBox(sx * (hw - segW / 2), 0, wz, segW, hh * 2, t, wallMat);
+      }
+      // sill (below window) and header (above window)
+      const sillH = winSill - -hh; // 1.3
+      this.carBoxes.push({ x: 0, y: -hh + sillH / 2, z: wz, sx: winHalf * 2, sy: sillH, sz: t });
+      this.addBox(0, -hh + sillH / 2, wz, winHalf * 2, sillH, t, wallMat);
+      const headH = hh - winTop; // 1.9
+      this.carBoxes.push({ x: 0, y: winTop + headH / 2, z: wz, sx: winHalf * 2, sy: headH, sz: t });
+      this.addBox(0, winTop + headH / 2, wz, winHalf * 2, headH, t, wallMat);
     }
 
     // front wall jambs + lintel (local -X, doorway at z 0)
@@ -189,24 +212,37 @@ export class Elevator {
     const h = y1 - y0;
     const yC = (y0 + y1) / 2;
     // North/south z-walls start at the room wall's outer face (25.0) so they
-    // never poke through into the room interior; east x-wall caps the shaft.
+    // never poke through into the room interior; a full-height window slot
+    // (matching the car windows) lets the car view out while traveling.
     const roomWallX = 25.0;
-    const nsSpan = CX + mx + 0.3 - roomWallX;
-    const nsCX = roomWallX + nsSpan / 2;
-    this.addBox(nsCX, yC, CZ - mz - 0.15, nsSpan, h, 0.3, wallMat, this.group);
-    this.addBox(nsCX, yC, CZ + mz + 0.15, nsSpan, h, 0.3, wallMat, this.group);
+    const slotHalf = 1.3;
+    const eastX = CX + mx + 0.3;
+    const leftSpan = CX - slotHalf - roomWallX;
+    const rightSpan = eastX - (CX + slotHalf);
+    for (const zWall of [CZ - mz - 0.15, CZ + mz + 0.15]) {
+      if (leftSpan > 0.01) {
+        this.addBox(roomWallX + leftSpan / 2, yC, zWall, leftSpan, h, 0.3, wallMat, this.group);
+      }
+      if (rightSpan > 0.01) {
+        this.addBox(CX + slotHalf + rightSpan / 2, yC, zWall, rightSpan, h, 0.3, wallMat, this.group);
+      }
+    }
     this.addBox(CX + mx + 0.15, yC, CZ, 0.3, h, mz * 2 + 0.3, wallMat, this.group);
     this.addBox(CX, y1 + 0.15, CZ, mx * 2 + 0.6, 0.3, mz * 2 + 0.6, wallMat, this.group);
     this.addBox(CX, y0 - 0.15, CZ, mx * 2 + 0.6, 0.3, mz * 2 + 0.6, wallMat, this.group);
   }
 
   private buildButtons(): void {
-    // Panel on the car's back wall interior, digits stacked top->bottom = 2..1
+    // Panel on the side wall next to the door (classic elevator spot),
+    // digits stacked top->bottom = 2..1, facing +Z into the car
     const cols = 1;
     const spacingV = 0.44;
-    const startY = -ELEVATOR_HALF_H * 0.25;
-    // Back wall spans local x [hw - t, hw]; sit just proud of its inner face
-    const btnX = ELEVATOR_HALF_W - ELEVATOR_T - 0.02;
+    // Side wall (-Z) inner face at z = -(hd - t); sit just proud of it
+    const btnZ = -(ELEVATOR_HALF_D - ELEVATOR_T) - 0.02;
+    // Near the door side (front wall inner face at x = -hw + t)
+    const btnX = -ELEVATOR_HALF_W + ELEVATOR_T + 0.3;
+    // Eye level when standing on the car floor: -hh + t + ~1.15
+    const startY = -ELEVATOR_HALF_H + ELEVATOR_T + 1.15;
     const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
 
     for (let i = 0; i < ELEVATOR_FLOORS; i++) {
@@ -217,16 +253,16 @@ export class Elevator {
       const btn = this.addBox(
         btnX,
         startY + row * spacingV,
-        0,
+        btnZ,
+        0.24,
+        0.24,
         0.04,
-        0.24,
-        0.24,
         mat,
       );
       this.buttonMats.push(mat);
-      this.addLabel(String(i + 1), btn.position.x - 0.045, btn.position.y, 0);
+      this.addLabel(String(i + 1), btn.position.x, btn.position.y, btn.position.z - 0.045);
       // Generous invisible pick target (Godot used an Area3D larger than the button)
-      const pickBox = this.addBox(btnX - 0.02, btn.position.y, 0, 0.08, 0.4, 0.4, pickMat);
+      const pickBox = this.addBox(btn.position.x, btn.position.y, btn.position.z - 0.02, 0.4, 0.4, 0.08, pickMat);
       this.interactables.push({
         pickMeshes: [pickBox],
         onHover: () => this.updateButtonColors(i),
@@ -253,8 +289,7 @@ export class Elevator {
       new THREE.PlaneGeometry(0.2, 0.2),
       new THREE.MeshBasicMaterial({ map: tex, transparent: true }),
     );
-    plane.rotation.y = -Math.PI / 2; // face -X, toward the door
-    plane.position.set(x, y, z);
+    plane.position.set(x, y, z); // faces +Z into the car
     this.carGroup.add(plane);
   }
 
@@ -289,7 +324,11 @@ export class Elevator {
       this.phaseT += dt;
       if (this.phase === 'closing') {
         this.doorSlide = 1 - Math.min(1, this.phaseT / ELEVATOR_DOOR_SECONDS);
-        if (this.phaseT >= ELEVATOR_DOOR_SECONDS) {
+        // Door sensor: never close on a player standing in the doorway
+        if (this.playerInDoorway(playerCenter)) {
+          this.phase = 'opening';
+          this.phaseT = this.doorSlide * ELEVATOR_DOOR_SECONDS;
+        } else if (this.phaseT >= ELEVATOR_DOOR_SECONDS) {
           this.phase = 'waiting';
           this.phaseT = 0;
         }
@@ -331,6 +370,17 @@ export class Elevator {
       Math.abs(p.z - CZ) < ELEVATOR_HALF_D - 0.4 + half.z &&
       p.y + half.y > this.carY - ELEVATOR_HALF_H &&
       p.y - half.y < this.carY + ELEVATOR_HALF_H
+    );
+  }
+
+  /** True when the player is standing in the open doorway strip. */
+  private playerInDoorway(p: { x: number; y: number; z: number }): boolean {
+    const doorX = CX - ELEVATOR_HALF_W + ELEVATOR_T / 2;
+    return (
+      Math.abs(p.x - doorX) < 1.0 &&
+      Math.abs(p.z - CZ) < DOOR_HALF + 0.25 &&
+      p.y > this.carY - ELEVATOR_HALF_H - 0.5 &&
+      p.y < this.carY + ELEVATOR_HALF_H + 0.5
     );
   }
 

@@ -38,7 +38,7 @@ const counts = await page.evaluate(() => {
   return { rooms: m.rooms, paintings: m.paintings, colliders: m.colliders };
 });
 console.log('museum:', JSON.stringify(counts));
-if (counts.rooms !== 42) throw new Error(`expected 42 rooms, got ${counts.rooms}`);
+if (counts.rooms !== 43) throw new Error(`expected 43 rooms, got ${counts.rooms}`);
 if (counts.paintings !== 27) throw new Error(`expected 27 paintings, got ${counts.paintings}`);
 
 // Walk forward through the spawn doorway
@@ -66,8 +66,7 @@ if (posAtWall.x < -14.8) throw new Error('player clipped through the west wall')
 // Painting pick: teleport in front of the first placed painting, aim by
 // projecting its world position through the camera, click, expect viewer.
 await page.evaluate(() => {
-  // First eligible room F1 (-10, 20, bits 8): painting on its zp wall, facing -Z.
-  // Pitch slightly up: painting center is now level with the corrected eye height.
+  // First eligible room F1 (-10, 20, bits 8): painting on its zp wall, facing -Z
   window.__MUSEUM.player.setPose(-10, -1.75, 20, Math.PI, 0.0224);
 });
 await page.waitForTimeout(300); // let the render loop refresh camera matrices
@@ -122,7 +121,7 @@ if (enteredX < 26.3) {
 
 // Press button 2 and ride to floor 2
 await page.evaluate(() => {
-  window.__MUSEUM.player.setPose(26.84, -1.75, -9.97, -Math.PI / 2, 0.146);
+  window.__MUSEUM.player.setPose(26.84, -1.75, -9.97, 0.474, 0.146);
 });
 await page.waitForTimeout(400); // let the render loop refresh camera matrices
 // One-shot pitch correction from the projected NDC error (fov 50 -> tan(25deg))
@@ -133,7 +132,7 @@ const btnAim = await page.evaluate(() => {
     .getWorldPosition(player.position.clone())
     .project(player.camera);
   const corrected = player.camera.rotation.x + Math.atan(v.y * Math.tan((25 * Math.PI) / 180));
-  player.setPose(26.84, -1.75, -9.97, -Math.PI / 2, corrected);
+  player.setPose(26.84, -1.75, -9.97, 0.474, corrected);
   return { first: { x: v.x, y: v.y }, corrected };
 });
 await page.waitForTimeout(400);
