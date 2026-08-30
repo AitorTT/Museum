@@ -56,7 +56,7 @@ export class Elevator {
   private readonly doorPanels: THREE.Mesh[] = [];
   private readonly buttonMats: THREE.MeshLambertMaterial[] = [];
   private readonly carBoxes: CarBox[] = [];
-  private doorSlide = 0; // 0 closed .. 1 open
+  private doorSlide = 1; // 0 closed .. 1 open; Godot snaps doors open at setup
   private carY = ELEVATOR_BASE_CAR_Y;
   private cur = 0;
   private target = 0;
@@ -207,6 +207,7 @@ export class Elevator {
     const startY = -ELEVATOR_HALF_H * 0.25;
     // Back wall spans local x [hw - t, hw]; sit just proud of its inner face
     const btnX = ELEVATOR_HALF_W - ELEVATOR_T - 0.02;
+    const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
 
     for (let i = 0; i < ELEVATOR_FLOORS; i++) {
       const row = Math.floor(i / cols);
@@ -224,8 +225,10 @@ export class Elevator {
       );
       this.buttonMats.push(mat);
       this.addLabel(String(i + 1), btn.position.x - 0.045, btn.position.y, 0);
+      // Generous invisible pick target (Godot used an Area3D larger than the button)
+      const pickBox = this.addBox(btnX - 0.02, btn.position.y, 0, 0.08, 0.4, 0.4, pickMat);
       this.interactables.push({
-        pickMeshes: [btn],
+        pickMeshes: [pickBox],
         onHover: () => this.updateButtonColors(i),
         onUnhover: () => this.updateButtonColors(-1),
         onClick: () => this.pressButton(i),
@@ -352,16 +355,17 @@ export class Elevator {
         maxZ: CZ + b.z + b.sz / 2,
       });
     }
-    // Door panels move with the slide offset
+    // Door panels move with the slide offset; panel z half-extent = (DOOR_HALF - 0.01) / 2
+    const panelZH = (DOOR_HALF - 0.01) / 2;
     for (let i = 0; i < this.doorPanels.length; i++) {
       const panel = this.doorPanels[i];
       boxes.push({
         minX: CX + panel.position.x - 0.075,
         minY: this.carY + panel.position.y - 2.395,
-        minZ: CZ + panel.position.z - 0.295,
+        minZ: CZ + panel.position.z - panelZH,
         maxX: CX + panel.position.x + 0.075,
         maxY: this.carY + panel.position.y + 2.395,
-        maxZ: CZ + panel.position.z + 0.295,
+        maxZ: CZ + panel.position.z + panelZH,
       });
     }
   }

@@ -107,9 +107,21 @@ const viewerClosed = await page.evaluate(
 console.log('viewer closed after second click:', viewerClosed);
 if (!viewerClosed) throw new Error('second click did not close the painting viewer');
 
-// Elevator: enter the car, press button 2, ride to floor 2
+// Elevator: WALK into the car through the room + car doorways (2m wide)
 await page.evaluate(() => {
-  // Car center (26.84, -9.97); face +X (yaw -PI/2) toward the button panel
+  window.__MUSEUM.player.setPose(23.0, -1.75, -9.97, -Math.PI / 2, 0);
+});
+await page.keyboard.down('KeyW');
+await page.waitForTimeout(1800);
+await page.keyboard.up('KeyW');
+const enteredX = await page.evaluate(() => window.__MUSEUM.player.position.x);
+console.log('x after walking into car:', enteredX);
+if (enteredX < 26.3) {
+  throw new Error(`could not walk into the elevator: x=${enteredX}`);
+}
+
+// Press button 2 and ride to floor 2
+await page.evaluate(() => {
   window.__MUSEUM.player.setPose(26.84, -1.75, -9.97, -Math.PI / 2, 0.146);
 });
 await page.waitForTimeout(400); // let the render loop refresh camera matrices
