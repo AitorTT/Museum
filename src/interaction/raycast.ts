@@ -96,6 +96,13 @@ export class Interaction {
   }
 
   private click(clientX: number, clientY: number): void {
+    // While the viewer covers the screen, the next click closes it (Godot's
+    // ignore_clicks behavior). Pointer lock keeps events on the canvas, so
+    // the overlay itself never sees them on desktop.
+    if (this.viewer.isOpen) {
+      this.viewer.hide();
+      return;
+    }
     const painting = this.pick(clientX, clientY);
     if (painting) {
       this.viewer.show(painting.imageUrl, painting.fileName);
@@ -103,6 +110,10 @@ export class Interaction {
   }
 
   private clickCenter(): void {
+    if (this.viewer.isOpen) {
+      this.viewer.hide();
+      return;
+    }
     const painting = this.pickCenter();
     if (painting) {
       this.viewer.show(painting.imageUrl, painting.fileName);

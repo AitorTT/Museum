@@ -9,7 +9,7 @@ import {
   FALL_RESPAWN_SECONDS,
   CAPSULE_RADIUS,
   CAPSULE_HEIGHT,
-  CAMERA_LOCAL_Y,
+  CAMERA_EYE_OFFSET_Y,
   CAMERA_LOCAL_Z,
   INITIAL_PITCH,
   CAMERA_FOV,
@@ -48,7 +48,8 @@ export class Player {
 
   constructor(private world: CollisionWorld) {
     this.camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.05, 4000);
-    this.camera.position.set(0, CAMERA_LOCAL_Y, CAMERA_LOCAL_Z);
+    // position is the collision AABB center; Godot's eye offset was above feet
+    this.camera.position.set(0, CAMERA_EYE_OFFSET_Y, CAMERA_LOCAL_Z);
     this.yawObject.add(this.camera);
     this.respawn();
   }

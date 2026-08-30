@@ -61,7 +61,8 @@ export const FALL_RESPAWN_SECONDS = 2.0;
 export const PLAYER_SCALE = 1.1;
 export const CAPSULE_RADIUS = 0.5 * PLAYER_SCALE;
 export const CAPSULE_HEIGHT = 2.0 * PLAYER_SCALE;
-export const CAMERA_LOCAL_Y = 1.60862 * PLAYER_SCALE;
+export const CAMERA_LOCAL_Y = 1.60862 * PLAYER_SCALE; // eye above FEET (node origin in Godot)
+export const CAMERA_EYE_OFFSET_Y = CAMERA_LOCAL_Y - CAPSULE_HEIGHT / 2; // eye above AABB center
 export const CAMERA_LOCAL_Z = -1.09669 * PLAYER_SCALE; // -Z = forward
 export const INITIAL_PITCH = -0.281186; // camera arm baked tilt (~16 deg down)
 export const CAMERA_FOV = 50.0;

@@ -20,6 +20,19 @@ await page.waitForSelector('#enter-btn:not(.hidden)', { timeout: 60000 });
 await page.click('#enter-btn');
 await page.waitForTimeout(1000);
 
+// Camera height: eye must sit ~1.77m above the feet (Godot rig), not above
+// the collision center (which put it at ~2.87m)
+const eye = await page.evaluate(() => {
+  const p = window.__MUSEUM.player;
+  const camY = new (p.position.constructor)(0, 0, 0);
+  p.camera.getWorldPosition(camY);
+  return { camY: camY.y, feetY: p.position.y - 1.1 };
+});
+console.log('eye above feet:', (eye.camY - eye.feetY).toFixed(3));
+if (Math.abs(eye.camY - eye.feetY - 1.769) > 0.01) {
+  throw new Error(`camera eye height wrong: ${eye.camY - eye.feetY}`);
+}
+
 const counts = await page.evaluate(() => {
   const m = window.__MUSEUM;
   return { rooms: m.rooms, paintings: m.paintings, colliders: m.colliders };
@@ -53,8 +66,9 @@ if (posAtWall.x < -14.8) throw new Error('player clipped through the west wall')
 // Painting pick: teleport in front of the first placed painting, aim by
 // projecting its world position through the camera, click, expect viewer.
 await page.evaluate(() => {
-  // First eligible room F1 (-10, 20, bits 8): painting on its zp wall, facing -Z
-  window.__MUSEUM.player.setPose(-10, -1.75, 20, Math.PI);
+  // First eligible room F1 (-10, 20, bits 8): painting on its zp wall, facing -Z.
+  // Pitch slightly up: painting center is now level with the corrected eye height.
+  window.__MUSEUM.player.setPose(-10, -1.75, 20, Math.PI, 0.0224);
 });
 await page.waitForTimeout(300); // let the render loop refresh camera matrices
 const aim = await page.evaluate(() => {
@@ -80,8 +94,18 @@ const viewerOpen = await page.evaluate(
   () => document.getElementById('painting-viewer').style.display !== 'none',
 );
 console.log('viewer open after painting click:', viewerOpen);
-await page.screenshot({ path: 'smoke-viewer.png' });
 if (!viewerOpen) throw new Error('painting viewer did not open');
+await page.screenshot({ path: 'smoke-viewer.png' });
+
+// Second click (still pointer-locked) must close the viewer
+await page.mouse.down();
+await page.mouse.up();
+await page.waitForTimeout(300);
+const viewerClosed = await page.evaluate(
+  () => document.getElementById('painting-viewer').style.display === 'none',
+);
+console.log('viewer closed after second click:', viewerClosed);
+if (!viewerClosed) throw new Error('second click did not close the painting viewer');
 
 await page.close();
 
