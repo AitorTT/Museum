@@ -100,13 +100,19 @@ export class Elevator {
   }
 
   private buildCar(): void {
-    const wallMat = this.wallMat();
+    // Light neutral interior so the car reads clearly against purple rooms
+    const wallMat = new THREE.MeshLambertMaterial();
+    wallMat.color.setRGB(0.72, 0.72, 0.74, THREE.LinearSRGBColorSpace);
     const floorMat = new THREE.MeshLambertMaterial();
     floorMat.color.setRGB(0.5, 0.5, 0.5, THREE.LinearSRGBColorSpace); // scene floor_material
     const ceilMat = new THREE.MeshLambertMaterial();
     ceilMat.color.setRGB(0.8, 0.8, 0.8, THREE.LinearSRGBColorSpace); // scene ceiling_material
     const doorMat = new THREE.MeshLambertMaterial();
     doorMat.color.setRGB(0.35, 0.35, 0.38, THREE.LinearSRGBColorSpace); // door_mat albedo
+    const lightMat = new THREE.MeshLambertMaterial();
+    lightMat.color.setRGB(1, 1, 1, THREE.LinearSRGBColorSpace);
+    lightMat.emissive.setRGB(1, 0.98, 0.92, THREE.LinearSRGBColorSpace);
+    lightMat.emissiveIntensity = 0.9;
 
     const hw = ELEVATOR_HALF_W;
     const hd = ELEVATOR_HALF_D;
@@ -121,6 +127,8 @@ export class Elevator {
     this.carBoxes.push({ x: 0, y: hh - t / 2, z: 0, sx: hw * 2, sy: t, sz: hd * 2 });
     this.addBox(0, -hh + t / 2, 0, hw * 2, t, hd * 2, floorMat);
     this.addBox(0, hh - t / 2, 0, hw * 2, t, hd * 2, ceilMat);
+    // ceiling light fixture
+    this.addBox(-0.4, hh - t - 0.02, 0, 1.2, 0.04, 1.6, lightMat);
 
     // back wall (solid, local +X), spans full depth incl. corners
     this.carBoxes.push({ x: hw - t / 2, y: 0, z: 0, sx: t, sy: hh * 2, sz: hd * 2 + t * 2 });
@@ -180,8 +188,13 @@ export class Elevator {
     const y1 = ELEVATOR_BASE_CAR_Y + ELEVATOR_FLOOR_HEIGHT + ELEVATOR_HALF_H + 0.3;
     const h = y1 - y0;
     const yC = (y0 + y1) / 2;
-    this.addBox(CX, yC, CZ - mz - 0.15, mx * 2 + 0.6, h, 0.3, wallMat, this.group);
-    this.addBox(CX, yC, CZ + mz + 0.15, mx * 2 + 0.6, h, 0.3, wallMat, this.group);
+    // North/south z-walls start at the room wall's outer face (25.0) so they
+    // never poke through into the room interior; east x-wall caps the shaft.
+    const roomWallX = 25.0;
+    const nsSpan = CX + mx + 0.3 - roomWallX;
+    const nsCX = roomWallX + nsSpan / 2;
+    this.addBox(nsCX, yC, CZ - mz - 0.15, nsSpan, h, 0.3, wallMat, this.group);
+    this.addBox(nsCX, yC, CZ + mz + 0.15, nsSpan, h, 0.3, wallMat, this.group);
     this.addBox(CX + mx + 0.15, yC, CZ, 0.3, h, mz * 2 + 0.3, wallMat, this.group);
     this.addBox(CX, y1 + 0.15, CZ, mx * 2 + 0.6, 0.3, mz * 2 + 0.6, wallMat, this.group);
     this.addBox(CX, y0 - 0.15, CZ, mx * 2 + 0.6, 0.3, mz * 2 + 0.6, wallMat, this.group);
@@ -192,6 +205,8 @@ export class Elevator {
     const cols = 1;
     const spacingV = 0.44;
     const startY = -ELEVATOR_HALF_H * 0.25;
+    // Back wall spans local x [hw - t, hw]; sit just proud of its inner face
+    const btnX = ELEVATOR_HALF_W - ELEVATOR_T - 0.02;
 
     for (let i = 0; i < ELEVATOR_FLOORS; i++) {
       const row = Math.floor(i / cols);
@@ -199,7 +214,7 @@ export class Elevator {
       mat.color.setRGB(0.2, 0.2, 0.2, THREE.LinearSRGBColorSpace);
       mat.emissive.setRGB(0, 0, 0);
       const btn = this.addBox(
-        ELEVATOR_HALF_W - ELEVATOR_T / 2 - 0.06,
+        btnX,
         startY + row * spacingV,
         0,
         0.04,

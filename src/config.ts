@@ -95,7 +95,7 @@ export const ELEVATOR_DOOR_SECONDS = 1.0; // door_speed 1.0
 export const ELEVATOR_PAUSE_SECONDS = 0.4; // pause with closed doors before moving
 
 // Teleporters (Teleporter.gd port; pads placed on walkable floors)
-export const TELEPORT_RADIUS = 0.85;
+export const TELEPORT_RADIUS = 1.15;
 export const TELEPORT_COOLDOWN = 1.0;
 export interface TeleporterPadDef {
   x: number;
