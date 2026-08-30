@@ -178,6 +178,36 @@ if (Math.abs(tp.y - 4.27) > 0.15) {
   throw new Error(`teleporter landed at wrong height: ${tp.y}`);
 }
 
+// Collision solidity: in-building drop must land on the floor below (no
+// tunneling, no respawn), and a void fall must respawn at the spawn point.
+await page.evaluate(() => {
+  // Just under floor 2's slab inside room (-10,20) F1
+  window.__MUSEUM.player.setPose(-10, 1.89, 20, Math.PI);
+});
+await page.waitForTimeout(1500);
+const drop = await page.evaluate(() => {
+  const p = window.__MUSEUM.player.position;
+  return { x: p.x, y: p.y, z: p.z };
+});
+console.log('in-building drop landed:', JSON.stringify(drop));
+if (Math.abs(drop.x - -10) > 0.05 || Math.abs(drop.y - -1.75) > 0.05) {
+  throw new Error(`drop tunneled or respawned: ${JSON.stringify(drop)}`);
+}
+
+await page.evaluate(() => {
+  // Void outside the building footprint
+  window.__MUSEUM.player.setPose(-25, 5, 20, Math.PI);
+});
+await page.waitForTimeout(2600);
+const voidFall = await page.evaluate(() => {
+  const p = window.__MUSEUM.player.position;
+  return { x: p.x, y: p.y, z: p.z };
+});
+console.log('void fall respawned to:', JSON.stringify(voidFall));
+if (Math.abs(voidFall.x - -3.129) > 0.05 || Math.abs(voidFall.z - -8.9) > 0.05) {
+  throw new Error(`void fall did not respawn cleanly: ${JSON.stringify(voidFall)}`);
+}
+
 await page.close();
 
 // ---------- Android pass ----------

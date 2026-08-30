@@ -43,8 +43,11 @@ export class CollisionWorld {
     pos.y += delta.y;
     let onGround = false;
     if (delta.y !== 0) {
+      const yBefore = pos.y;
       const hit = this.resolveAxis(pos, half, 1, delta.y);
-      if (hit && delta.y < 0) onGround = true;
+      // Grounded only when the resolver pushed us UP onto a surface; being
+      // ejected downward from a ceiling is not ground.
+      if (hit && delta.y < 0 && pos.y >= yBefore) onGround = true;
     }
     return onGround;
   }
@@ -65,11 +68,17 @@ export class CollisionWorld {
     return hit;
   }
 
+  /**
+   * Minimal-translation resolve: push the player out through the NEAREST face
+   * of the box, never the far one. An embedded player (spawn/teleport/ride
+   * edge cases) is ejected a few centimeters instead of teleported on top of
+   * whatever they clipped into.
+   */
   private resolveOne(
     pos: THREE.Vector3,
     half: { x: number; y: number; z: number },
     axis: 0 | 1 | 2,
-    amount: number,
+    _amount: number,
     b: AABBBox,
   ): boolean {
     const pminX = pos.x - half.x;
@@ -82,11 +91,17 @@ export class CollisionWorld {
     if (pminY >= b.maxY || pmaxY <= b.minY) return false;
     if (pminZ >= b.maxZ || pmaxZ <= b.minZ) return false;
     if (axis === 0) {
-      pos.x = amount > 0 ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
+      const outMin = pmaxX - b.minX; // depth pushing toward -X face
+      const outMax = b.maxX - pminX; // depth pushing toward +X face
+      pos.x = outMin < outMax ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
     } else if (axis === 1) {
-      pos.y = amount > 0 ? b.minY - half.y - EPS : b.maxY + half.y + EPS;
+      const outUp = b.maxY - pminY; // depth pushing up onto the top face
+      const outDown = pmaxY - b.minY; // depth pushing down under the bottom face
+      pos.y = outUp < outDown ? b.maxY + half.y + EPS : b.minY - half.y - EPS;
     } else {
-      pos.z = amount > 0 ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
+      const outMin = pmaxZ - b.minZ;
+      const outMax = b.maxZ - pminZ;
+      pos.z = outMin < outMax ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
     }
     return true;
   }

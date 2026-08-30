@@ -25,6 +25,12 @@ const HALF = { x: CAPSULE_RADIUS, y: CAPSULE_HEIGHT / 2, z: CAPSULE_RADIUS };
 const MAX_PITCH = (MAX_PITCH_DEG * Math.PI) / 180;
 // Walkable surface of floor 1 (floor box top): -HH + thickness
 const FLOOR1_TOP = -ROOM_HEIGHT / 2 + WALL_T;
+// Substepping: thinnest collider is 0.15m (floor slabs / walls); keep each
+// physics slice well under that so fast falls can never tunnel through.
+const MAX_SUBSTEP_DISTANCE = 0.08;
+const MAX_SUBSTEPS = 24;
+const TERMINAL_VELOCITY = 25.0;
+const VOID_Y = -40;
 
 export interface Vec2Like {
   x: number;
@@ -80,16 +86,32 @@ export class Player {
 
     // Gravity always accumulates; floor contact zeroes it (keeps ground detection stable)
     this.velocity.y -= PLAYER_GRAVITY * dt;
+    if (this.velocity.y < -TERMINAL_VELOCITY) this.velocity.y = -TERMINAL_VELOCITY;
 
-    const delta = this.velocity.clone().multiplyScalar(dt);
-    const onGround = this.world.move(this.position, HALF, delta);
+    // Substep the move so no single slice exceeds MAX_SUBSTEP_DISTANCE —
+    // thin floor slabs and walls can't be tunneled through at any speed.
+    const speed = this.velocity.length();
+    const steps = Math.min(
+      MAX_SUBSTEPS,
+      Math.max(1, Math.ceil((speed * dt) / MAX_SUBSTEP_DISTANCE)),
+    );
+    const sub = dt / steps;
+    const delta = new THREE.Vector3();
+    let onGround = false;
+    for (let i = 0; i < steps; i++) {
+      delta.set(this.velocity.x * sub, this.velocity.y * sub, this.velocity.z * sub);
+      if (this.world.move(this.position, HALF, delta)) {
+        onGround = true;
+        if (this.velocity.y < 0) this.velocity.y = 0;
+      }
+    }
 
     if (onGround) {
       this.velocity.y = 0;
       this.fallTimer = 0;
     } else {
       this.fallTimer += dt;
-      if (this.fallTimer > FALL_RESPAWN_SECONDS) {
+      if (this.fallTimer > FALL_RESPAWN_SECONDS || this.position.y < VOID_Y) {
         this.respawn();
       }
     }
