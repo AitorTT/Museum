@@ -15,6 +15,8 @@ const EPS = 1e-4;
 
 export class CollisionWorld {
   readonly boxes: AABBBox[] = [];
+  /** Moving colliders (elevator car/doors), refreshed externally each frame. */
+  dynamicBoxes: AABBBox[] = [];
 
   addBox(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number): void {
     this.boxes.push({
@@ -55,24 +57,37 @@ export class CollisionWorld {
   ): boolean {
     let hit = false;
     for (const b of this.boxes) {
-      const pminX = pos.x - half.x;
-      const pmaxX = pos.x + half.x;
-      const pminY = pos.y - half.y;
-      const pmaxY = pos.y + half.y;
-      const pminZ = pos.z - half.z;
-      const pmaxZ = pos.z + half.z;
-      if (pminX >= b.maxX || pmaxX <= b.minX) continue;
-      if (pminY >= b.maxY || pmaxY <= b.minY) continue;
-      if (pminZ >= b.maxZ || pmaxZ <= b.minZ) continue;
-      hit = true;
-      if (axis === 0) {
-        pos.x = amount > 0 ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
-      } else if (axis === 1) {
-        pos.y = amount > 0 ? b.minY - half.y - EPS : b.maxY + half.y + EPS;
-      } else {
-        pos.z = amount > 0 ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
-      }
+      if (this.resolveOne(pos, half, axis, amount, b)) hit = true;
+    }
+    for (const b of this.dynamicBoxes) {
+      if (this.resolveOne(pos, half, axis, amount, b)) hit = true;
     }
     return hit;
+  }
+
+  private resolveOne(
+    pos: THREE.Vector3,
+    half: { x: number; y: number; z: number },
+    axis: 0 | 1 | 2,
+    amount: number,
+    b: AABBBox,
+  ): boolean {
+    const pminX = pos.x - half.x;
+    const pmaxX = pos.x + half.x;
+    const pminY = pos.y - half.y;
+    const pmaxY = pos.y + half.y;
+    const pminZ = pos.z - half.z;
+    const pmaxZ = pos.z + half.z;
+    if (pminX >= b.maxX || pmaxX <= b.minX) return false;
+    if (pminY >= b.maxY || pmaxY <= b.minY) return false;
+    if (pminZ >= b.maxZ || pmaxZ <= b.minZ) return false;
+    if (axis === 0) {
+      pos.x = amount > 0 ? b.minX - half.x - EPS : b.maxX + half.x + EPS;
+    } else if (axis === 1) {
+      pos.y = amount > 0 ? b.minY - half.y - EPS : b.maxY + half.y + EPS;
+    } else {
+      pos.z = amount > 0 ? b.minZ - half.z - EPS : b.maxZ + half.z + EPS;
+    }
+    return true;
   }
 }

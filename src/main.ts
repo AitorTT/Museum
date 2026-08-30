@@ -7,6 +7,10 @@ import {
 } from './config.js';
 import { Museum } from './museum/Museum.js';
 import { MUSEUM } from './museum/layout.js';
+import { createSky } from './museum/Sky.js';
+import { Elevator } from './museum/Elevator.js';
+import { Teleporters } from './museum/Teleporters.js';
+import type { Interactable } from './interaction/Interactable.js';
 import { PAINTING_FILES, paintingUrl } from './museum/paintingList.js';
 import { Player } from './player/Player.js';
 import { VirtualJoysticks } from './player/joysticks.js';
@@ -85,6 +89,15 @@ function setupScene(
   const museum = new Museum(paintingTextures, PAINTING_FILES, paintingUrls, floorTex);
   scene.add(museum.group);
 
+  scene.add(createSky());
+
+  const elevator = new Elevator();
+  scene.add(elevator.group);
+  museum.collision.dynamicBoxes = elevator.dynamicBoxes;
+
+  const teleporters = new Teleporters();
+  scene.add(teleporters.group);
+
   player = new Player(museum.collision);
   scene.add(player.yawObject);
 
@@ -95,6 +108,8 @@ function setupScene(
     rooms: MUSEUM.reduce((n, f) => n + f.rooms.length, 0),
     museum,
     player,
+    elevator,
+    teleporters,
   };
 
   if (isMobile) {
@@ -104,7 +119,20 @@ function setupScene(
   }
 
   const viewer = new PaintingViewer();
-  new Interaction(player.camera, museum.paintings, museum.raycastStatics, viewer, renderer.domElement, isMobile);
+  const paintingInteractables: Interactable[] = museum.paintings.map((p) => ({
+    pickMeshes: p.pickMeshes,
+    onHover: () => p.onHoverEnter(),
+    onUnhover: () => p.onHoverExit(),
+    onClick: () => viewer.show(p.imageUrl, p.fileName),
+  }));
+  new Interaction(
+    player.camera,
+    [...paintingInteractables, ...elevator.interactables],
+    museum.raycastStatics,
+    viewer,
+    renderer.domElement,
+    isMobile,
+  );
 
   // Correct the camera aspect immediately (it defaults to 1 and would stretch
   // the image until the first real resize event).
@@ -135,6 +163,8 @@ function setupScene(
     const now = performance.now();
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
+    elevator.update(dt, player.position);
+    teleporters.update(dt, player);
     player.update(dt);
     renderer.render(scene, player.camera);
   });

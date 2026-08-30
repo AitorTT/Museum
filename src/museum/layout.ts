@@ -29,7 +29,7 @@ const FLOOR_1: RoomDef[] = [
   r(-10, -10, 13),// (3,1) xp+zp+zn
   r(0, -10, 11),  // (3,2) xp+xn+zn
   r(10, -10, 3),  // (3,3) xp+xn
-  r(20, -10, 10), // (3,4) xn+zn
+  r(20, -10, 11), // (3,4) xp+xn+zn (xp doorway added for the elevator)
   r(-10, -20, 5), // (4,1) xp+zp
   r(0, -20, 14),  // (4,2) xn+zp+zn
   r(20, -20, 12), // (4,4) zp+zn
@@ -45,7 +45,7 @@ const FLOOR_2: RoomDef[] = [
   r(-10, 0, 12),  // (2,1) zp+zn
   r(-10, -10, 12),// (3,1) zp+zn
   r(10, -10, 9),  // (3,3) xp+zn
-  r(20, -10, 2),  // (3,4) xn
+  r(20, -10, 3),  // (3,4) xp+xn (xp doorway added for the elevator)
   r(-10, -20, 5), // (4,1) xp+zp
   r(0, -20, 3),   // (4,2) xp+xn
   r(10, -20, 14), // (4,3) xn+zp+zn

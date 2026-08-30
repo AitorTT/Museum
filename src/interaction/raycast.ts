@@ -1,23 +1,31 @@
-// Port of character_body_3d.gd _unhandled_input picking + Painting.gd reactions.
+// Port of character_body_3d.gd _unhandled_input picking, generalized to any
+// Interactable (paintings, elevator buttons, ...).
 // Desktop: hover from mouse position (screen-center ray while pointer-locked,
 // matching Godot's captured-mouse behavior); touch taps click directly.
 import * as THREE from 'three';
-import type { Painting } from '../museum/Painting.js';
+import type { Interactable } from './Interactable.js';
 import type { PaintingViewer } from '../ui/PaintingViewer.js';
 
 export class Interaction {
   private raycaster = new THREE.Raycaster();
-  private hovered: Painting | null = null;
+  private hovered: Interactable | null = null;
   private ndc = new THREE.Vector2();
+  private meshMap = new Map<THREE.Object3D, Interactable>();
 
   constructor(
     private camera: THREE.Camera,
-    private paintings: Painting[],
+    interactables: Interactable[],
     private statics: THREE.Object3D[],
     private viewer: PaintingViewer,
     private canvas: HTMLCanvasElement,
     isMobile: boolean,
   ) {
+    for (const entry of interactables) {
+      for (const mesh of entry.pickMeshes) {
+        this.meshMap.set(mesh, entry);
+      }
+    }
+
     if (!isMobile) {
       canvas.addEventListener('mousemove', (e) => {
         const locked = document.pointerLockElement === this.canvas;
@@ -48,36 +56,35 @@ export class Interaction {
     }
   }
 
+  private pick(clientX: number, clientY: number): Interactable | null {
+    this.setNdc(clientX, clientY);
+    return this.pickCurrentNdc();
+  }
+
+  private pickCenter(): Interactable | null {
+    this.ndc.set(0, 0);
+    return this.pickCurrentNdc();
+  }
+
+  private pickCurrentNdc(): Interactable | null {
+    this.raycaster.setFromCamera(this.ndc, this.camera);
+
+    const meshes = [...this.meshMap.keys()];
+    const hit = this.raycaster.intersectObjects(meshes, false)[0];
+    const staticHit = this.raycaster.intersectObjects(this.statics, false)[0];
+
+    if (hit && (!staticHit || hit.distance < staticHit.distance)) {
+      return this.meshMap.get(hit.object) ?? null;
+    }
+    return null;
+  }
+
   private setNdc(clientX: number, clientY: number): void {
     const rect = this.canvas.getBoundingClientRect();
     this.ndc.set(
       ((clientX - rect.left) / rect.width) * 2 - 1,
       -((clientY - rect.top) / rect.height) * 2 + 1,
     );
-  }
-
-  private pick(clientX: number, clientY: number): Painting | null {
-    this.setNdc(clientX, clientY);
-    return this.pickCurrentNdc();
-  }
-
-  private pickCenter(): Painting | null {
-    this.ndc.set(0, 0);
-    return this.pickCurrentNdc();
-  }
-
-  private pickCurrentNdc(): Painting | null {
-    this.raycaster.setFromCamera(this.ndc, this.camera);
-
-    const paintingMeshes: THREE.Object3D[] = [];
-    for (const p of this.paintings) paintingMeshes.push(...p.pickMeshes);
-    const paintingHit = this.raycaster.intersectObjects(paintingMeshes, false)[0];
-    const staticHit = this.raycaster.intersectObjects(this.statics, false)[0];
-
-    if (paintingHit && (!staticHit || paintingHit.distance < staticHit.distance)) {
-      return (paintingHit.object.userData.painting as Painting) ?? null;
-    }
-    return null;
   }
 
   private updateHover(clientX: number, clientY: number): void {
@@ -88,11 +95,11 @@ export class Interaction {
     this.applyHover(this.pickCenter());
   }
 
-  private applyHover(painting: Painting | null): void {
-    if (painting === this.hovered) return;
-    if (this.hovered) this.hovered.onHoverExit();
-    this.hovered = painting;
-    if (this.hovered) this.hovered.onHoverEnter();
+  private applyHover(entry: Interactable | null): void {
+    if (entry === this.hovered) return;
+    if (this.hovered?.onUnhover) this.hovered.onUnhover();
+    this.hovered = entry;
+    if (this.hovered?.onHover) this.hovered.onHover();
   }
 
   private click(clientX: number, clientY: number): void {
@@ -103,10 +110,7 @@ export class Interaction {
       this.viewer.hide();
       return;
     }
-    const painting = this.pick(clientX, clientY);
-    if (painting) {
-      this.viewer.show(painting.imageUrl, painting.fileName);
-    }
+    this.pick(clientX, clientY)?.onClick();
   }
 
   private clickCenter(): void {
@@ -114,9 +118,6 @@ export class Interaction {
       this.viewer.hide();
       return;
     }
-    const painting = this.pickCenter();
-    if (painting) {
-      this.viewer.show(painting.imageUrl, painting.fileName);
-    }
+    this.pickCenter()?.onClick();
   }
 }

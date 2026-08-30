@@ -109,6 +109,13 @@ export class Player {
     this.camera.rotation.x = this.pitch;
   }
 
+  /** Instant repositioning (teleporter pads); keeps current view angles. */
+  teleportTo(x: number, y: number, z: number): void {
+    this.position.set(x, y, z);
+    this.velocity.set(0, 0, 0);
+    this.fallTimer = 0;
+  }
+
   respawn(): void {
     this.setPose(SPAWN_X, FLOOR1_TOP + CAPSULE_HEIGHT / 2, SPAWN_Z, SPAWN_YAW, INITIAL_PITCH);
   }

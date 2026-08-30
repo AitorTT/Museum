@@ -73,7 +73,50 @@ export const SPAWN_Z = -8.900534;
 export const SPAWN_YAW = Math.PI / 2; // face -X world (Godot basis z-axis -> +X)
 
 // World
-export const SKY_COLOR = 0x393939; // Godot default clear color
+export const SKY_COLOR = 0x393939; // fallback clear color (sky dome overdraws it)
+export const SKY_TOP = 0x2b4a7f;
+export const SKY_HORIZON = 0xb5c7da;
+export const SKY_BOTTOM = 0x23272f;
+
+// Elevator (ElevatorGenerator.gd port; car aligned to museum floors 1-2)
+export const ELEVATOR_CENTER_X = 26.84;
+export const ELEVATOR_CENTER_Z = -9.97;
+export const ELEVATOR_BASE_CAR_Y = -0.65; // car center Y at floor 1 (slab top = floorTopY(0))
+export const ELEVATOR_FLOOR_HEIGHT = 6.0;
+export const ELEVATOR_FLOORS = 2;
+export const ELEVATOR_HALF_W = 2.0; // X extent (4m wide car)
+export const ELEVATOR_HALF_D = 3.0; // Z extent (6m deep car)
+export const ELEVATOR_HALF_H = 2.5; // Y extent (5m tall car)
+export const ELEVATOR_T = 0.3; // wall thickness (world)
+export const ELEVATOR_DOOR_W = 1.2;
+export const ELEVATOR_DOOR_H = 4.8;
+export const ELEVATOR_MOVE_SECONDS = 3.0; // elevator_speed
+export const ELEVATOR_DOOR_SECONDS = 1.0; // door_speed 1.0
+export const ELEVATOR_PAUSE_SECONDS = 0.4; // pause with closed doors before moving
+
+// Teleporters (Teleporter.gd port; pads placed on walkable floors)
+export const TELEPORT_RADIUS = 0.85;
+export const TELEPORT_COOLDOWN = 1.0;
+export interface TeleporterPadDef {
+  x: number;
+  z: number;
+  floor: number; // museum floor index (0-based); pad sits on its walkable surface
+}
+export const TELEPORT_PAIRS: Array<[TeleporterPadDef, TeleporterPadDef]> = [
+  [
+    { x: -3.81, z: -13.5, floor: 0 },
+    { x: -6.1, z: -6.5, floor: 1 },
+  ],
+  [
+    { x: -5.83, z: -13.5, floor: 2 },
+    { x: -6.1, z: -6.5, floor: 3 },
+  ],
+];
+
+/** Walkable surface height of a museum floor (floor slab top). */
+export function floorTopY(floor: number): number {
+  return floor * ROOM_HEIGHT - ROOM_HEIGHT / 2 + WALL_T;
+}
 
 // Painting textures location under public/
 export const PAINTINGS_DIR = 'paintings';

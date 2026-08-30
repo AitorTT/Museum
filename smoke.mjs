@@ -107,6 +107,65 @@ const viewerClosed = await page.evaluate(
 console.log('viewer closed after second click:', viewerClosed);
 if (!viewerClosed) throw new Error('second click did not close the painting viewer');
 
+// Elevator: enter the car, press button 2, ride to floor 2
+await page.evaluate(() => {
+  // Car center (26.84, -9.97); face +X (yaw -PI/2) toward the button panel
+  window.__MUSEUM.player.setPose(26.84, -1.75, -9.97, -Math.PI / 2, 0.146);
+});
+await page.waitForTimeout(400); // let the render loop refresh camera matrices
+// One-shot pitch correction from the projected NDC error (fov 50 -> tan(25deg))
+const btnAim = await page.evaluate(() => {
+  const { elevator, player } = window.__MUSEUM;
+  player.camera.updateMatrixWorld(true);
+  const v = elevator.interactables[1].pickMeshes[0]
+    .getWorldPosition(player.position.clone())
+    .project(player.camera);
+  const corrected = player.camera.rotation.x + Math.atan(v.y * Math.tan((25 * Math.PI) / 180));
+  player.setPose(26.84, -1.75, -9.97, -Math.PI / 2, corrected);
+  return { first: { x: v.x, y: v.y }, corrected };
+});
+await page.waitForTimeout(400);
+const btnAim2 = await page.evaluate(() => {
+  const { elevator, player } = window.__MUSEUM;
+  player.camera.updateMatrixWorld(true);
+  const v = elevator.interactables[1].pickMeshes[0]
+    .getWorldPosition(player.position.clone())
+    .project(player.camera);
+  return { x: v.x, y: v.y };
+});
+console.log('button aim:', JSON.stringify(btnAim), '->', JSON.stringify(btnAim2));
+if (Math.abs(btnAim2.x) > 0.2 || Math.abs(btnAim2.y) > 0.2) {
+  throw new Error(`elevator button not centered: ${JSON.stringify(btnAim2)}`);
+}
+await page.mouse.down();
+await page.mouse.up();
+await page.waitForTimeout(6500); // close 1s + pause 0.4 + move 3 + open 1
+const ride = await page.evaluate(() => {
+  const p = window.__MUSEUM.player.position;
+  return { x: p.x, y: p.y, z: p.z };
+});
+console.log('pos after elevator ride:', JSON.stringify(ride));
+if (Math.abs(ride.y - 4.25) > 0.15) {
+  throw new Error(`elevator did not carry player to floor 2: y=${ride.y}`);
+}
+
+// Teleporter: step on pad A of pair 1, expect swap to pad B
+await page.evaluate(() => {
+  window.__MUSEUM.player.setPose(-3.81, -1.75, -13.5, Math.PI);
+});
+await page.waitForTimeout(400);
+const tp = await page.evaluate(() => {
+  const p = window.__MUSEUM.player.position;
+  return { x: p.x, y: p.y, z: p.z };
+});
+console.log('pos after teleporter:', JSON.stringify(tp));
+if (Math.abs(tp.x - -6.1) > 0.2 || Math.abs(tp.z - -6.5) > 0.2) {
+  throw new Error(`teleporter did not swap pads: ${JSON.stringify(tp)}`);
+}
+if (Math.abs(tp.y - 4.27) > 0.15) {
+  throw new Error(`teleporter landed at wrong height: ${tp.y}`);
+}
+
 await page.close();
 
 // ---------- Android pass ----------
